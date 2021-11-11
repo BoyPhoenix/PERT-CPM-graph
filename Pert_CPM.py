@@ -432,7 +432,7 @@ class Project:
     # By definition - a critical path is a path which every node in it has 0 slack time
     @log_with_msg("Getting critical paths")
     def __get_critical_paths__(self) -> list:
-        return [path for path in self.all_paths if not [node.slack for node in path if node.slack is not 0]]
+        return [path for path in self.all_paths if not [node.slack for node in path if node.slack != 0]]
 
     # Returns true if and only if this graph is valid, aka - has no cycles in it
     # NOTE : a cyclic path in the graph is for example :
@@ -444,7 +444,7 @@ class Project:
     # Returns a sorted list of slack
     @log_with_msg("Getting all slack times")
     def __get_all_slacks__(self) -> list:
-        return sorted([node.slack for node in self.all_nodes if node.slack is not 0], reverse=True)
+        return sorted([node.slack for node in self.all_nodes if node.slack != 0], reverse=True)
 
     # Returns the starting node, not including isolated nodes
     @log_with_msg("Getting start nodes")
@@ -468,7 +468,7 @@ class Project:
         for node in list(itertools.chain(*self.all_paths)):
             for transition in self._graph[node]:
                 transition.to_node.early_finish = transition.activity.duration + transition.from_node.early_finish \
-                    if transition.to_node.early_finish is 0 else max(transition.to_node.early_finish,
+                    if transition.to_node.early_finish == 0 else max(transition.to_node.early_finish,
                                                                      transition.from_node.early_finish +
                                                                      transition.activity.duration)
                 for par_node in transition.to_node.parallel_nodes:
@@ -486,13 +486,13 @@ class Project:
                     late = min(
                         [self.get_node_number(par.number).late_finish for par in transition.to_node.parallel_nodes])
                     # if we haven't calculated late finish yet or if the late is smaller than the current late finish
-                    if transition.to_node.late_finish is 0 or transition.to_node.late_finish > late:
+                    if transition.to_node.late_finish == 0 or transition.to_node.late_finish > late:
                         transition.to_node.late_finish = late
 
                 # if to_node.late_finish still 0, we can't compute its from_node.late_finish yet...
-                if transition.to_node.late_finish is not 0:
+                if transition.to_node.late_finish != 0:
                     transition.from_node.late_finish = transition.to_node.late_finish - transition.activity.duration \
-                        if transition.from_node.late_finish is 0 and transition.from_node != self.start \
+                        if transition.from_node.late_finish == 0 and transition.from_node != self.start \
                         else min(transition.from_node.late_finish,
                                  transition.to_node.late_finish - transition.activity.duration)
 
